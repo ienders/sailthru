@@ -37,6 +37,8 @@ module Sailthru
 
     def send(template_name, email, vars, options = {}, schedule_time = nil)
       @client.send(template_name, email, vars, options, schedule_time)
+    rescue Exception => e
+      "Exception while invoking send: #{e.message}"
     end
 
     def get_send(send_id)
