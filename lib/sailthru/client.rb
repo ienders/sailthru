@@ -3,7 +3,7 @@ require 'sailthru/triggermail_client'
 module Sailthru
   class Client
     def initialize
-      @config = YAML.load(File.read(Rails.root + 'config' + 'sailthru.yml'))
+      @config = YAML.load(File.join(Rails.root, 'config', 'sailthru.yml'))
       @client = Sailthru::TriggermailClient.new(
         @config['api_key'],
         @config['secret'],

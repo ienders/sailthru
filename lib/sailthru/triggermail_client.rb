@@ -39,7 +39,12 @@ require 'net/http'
 require 'uri'
 require 'rubygems'
 require 'json'
-require 'md5'
+
+begin
+  require 'md5'
+rescue LoadError
+  require 'digest/md5'
+end
 
 module Sailthru
 

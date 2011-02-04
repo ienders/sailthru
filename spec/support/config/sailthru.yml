@@ -1,0 +1,5 @@
+# placeholder config
+api_key: YOUR_API_KEY
+secret: YOUR_SECRET
+api_uri: http://api.sailthru.com
+mailing_list_key: mailing_list
