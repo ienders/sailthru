@@ -11,7 +11,7 @@
 #
 # Special thanks to the iminlikewithyou.com team for the development
 # of this library.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
@@ -34,12 +34,12 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ################################################################################
- 
+
 require 'net/http'
 require 'uri'
 require 'rubygems'
 require 'json'
-require 'md5'
+require 'digest/md5'
 
 module Sailthru
 
@@ -48,21 +48,21 @@ module Sailthru
 
   class TriggermailClient
     attr_accessor :api_uri, :api_key, :secret, :version, :last_request
-  
+
     VERSION = '1.0'
 
     # params:
     #   api_key, String
     #   secret, String
     #   api_uri, String
-    # 
+    #
     # Instantiate a new client; constructor optionally takes overrides for key/secret/uri.
     def initialize(api_key, secret, api_uri)
       @api_key = api_key
       @secret  = secret
       @api_uri = api_uri
     end
-  
+
     # params:
     #   template_name, String
     #   email, String
@@ -83,17 +83,17 @@ module Sailthru
       result = self.api_post(:send, post)
     end
 
-  
+
     # params:
     #   send_id, Fixnum
     # returns:
     #   Hash, response data from server
-    # 
+    #
     # Get the status of a send.
     def get_send(send_id)
-      self.api_get(:send, {:send_id => send_id.to_s})      
+      self.api_get(:send, {:send_id => send_id.to_s})
     end
-  
+
     # params:
     #   name, String
     #   list, String
@@ -120,8 +120,8 @@ module Sailthru
       post[:content_text] = content_text
       self.api_post(:blast, post)
     end
-  
-  
+
+
     # params:
     #   blast_id, Fixnum
     # returns:
@@ -131,24 +131,24 @@ module Sailthru
     def get_blast(blast_id)
       self.api_get(:blast, {:blast_id => blast_id.to_s})
     end
-  
+
     # params:
     #   email, String
     # returns:
     #   Hash, response data from server
-    # 
+    #
     # Return information about an email address, including replacement vars and lists.
     def get_email(email)
       self.api_get(:email, {:email => email})
     end
-  
+
     # params:
     #   email, String
     #   vars, Hash
     #   lists, Hash mapping list name => 1 for subscribed, 0 for unsubscribed
     # returns:
     #   Hash, response data from server
-    # 
+    #
     # Set replacement vars and/or list subscriptions for an email address.
     def set_email(email, vars = {}, lists = {}, templates = {})
       data = {:email => email}
@@ -157,7 +157,7 @@ module Sailthru
       data[:templates] = templates unless templates.empty?
       self.api_post(:email, data)
     end
-  
+
     # params:
     #  email, String
     #  password, String
@@ -172,33 +172,33 @@ module Sailthru
       data[:names] = 1 if with_names
       self.api_post(:contacts, data)
     end
-  
-  
+
+
     # params:
     #   template_name, String
     # returns:
     #   Hash of response data.
-    # 
+    #
     # Get a template.
     def get_template(template_name)
       self.api_get(:template, {:template => template_name})
     end
-  
-  
+
+
     # params:
     #   template_name, String
     #   template_fields, Hash
     # returns:
     #   Hash containg response from the server.
-    # 
+    #
     # Save a template.
     def save_template(template_name, template_fields)
       data = template_fields
       data[:template] = template_name
       self.api_post(:template, data)
     end
-  
-  
+
+
     # params:
     #   params, Hash
     #   request, String
@@ -207,57 +207,57 @@ module Sailthru
     def receive_verify_post(params, request)
       if request.post?
         [:action, :email, :send_id, :sig].each { |key| return false unless params.has_key?(key) }
-      
+
         return false unless params[:action] == :verify
-      
+
         sig = params[:sig]
         params.delete(:sig)
         return false unless sig == TriggermailClient.get_signature_hash(params, @secret)
-      
+
         _send = self.get_send(params[:send_id])
         return false unless _send.has_key?(:email)
-      
+
         return false unless _send[:email] == params[:email]
-      
+
         return true
       else
         return false
       end
     end
-  
-  
+
+
     # Perform API GET request
     def api_get(action, data)
       api_request(action, data, 'GET')
     end
-  
+
     # Perform API POST request
     def api_post(action, data)
       api_request(action, data, 'POST')
     end
-  
+
     # params:
     #   action, String
     #   data, Hash
     #   request, String "GET" or "POST"
     # returns:
     #   Hash
-    #   
+    #
     # Perform an API request, using the shared-secret auth hash.
-    #   
+    #
     def api_request(action, data, request_type)
       data[:api_key] = @api_key
       data[:format] ||= 'json'
       data[:sig] = Sailthru::TriggermailClient.get_signature_hash(data, @secret)
       _result = self.http_request("#{@api_uri}/#{action}", data, request_type)
-    
-    
+
+
       # NOTE: don't do the unserialize here
       unserialized = JSON.parse(_result)
       return unserialized ? unserialized : _result
     end
-  
-  
+
+
     # params:
     #   uri, String
     #   data, Hash
@@ -272,10 +272,10 @@ module Sailthru
       else
         uri += "?" + data.map{ |key, value| "#{key}=#{value}" }.join("&")
       end
-    
+
       req = nil
       headers = {"User-Agent" => "Triggermail API Ruby Client #{VERSION}"}
-    
+
       _uri  = URI.parse(uri)
       if method == 'POST'
         req = Net::HTTP::Post.new(_uri.path, headers)
@@ -283,7 +283,7 @@ module Sailthru
       else
         req = Net::HTTP::Get.new("#{_uri.path}?#{_uri.query}", headers)
       end
-    
+
       @last_request = req
       begin
         response = Net::HTTP.start(_uri.host, _uri.port) {|http|
@@ -292,15 +292,15 @@ module Sailthru
       rescue Exception => e
         raise Sailthru::TriggermailClientException.new("Unable to open stream: #{_uri.to_s}");
       end
-    
+
       if response.body
         return response.body
       else
         raise Sailthru::TriggermailClientException.new("No response received from stream: #{_uri.to_s}")
       end
-    
+
     end
-  
+
     # Flatten nested hash for GET / POST request.
     def flatten_nested_hash(hash, brackets = true)
       f = {}
@@ -335,8 +335,8 @@ module Sailthru
       end
       return values
     end
-  
-  
+
+
     # params:
     #   params, Hash
     #   secret, String
@@ -346,6 +346,6 @@ module Sailthru
       string = secret + self.extract_param_values(params).sort_by{|x| x.to_s}.join("")
       MD5.md5(string) # debuggin
     end
-  
+
   end
 end
