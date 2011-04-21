@@ -344,7 +344,7 @@ module Sailthru
     #   String, an MD5 hash of the secret + sorted list of parameter values for an API call.
     def self.get_signature_hash(params, secret)
       string = secret + self.extract_param_values(params).sort_by{|x| x.to_s}.join("")
-      MD5.md5(string) # debuggin
+      Digest::MD5.hexdigest(string) # debuggin
     end
 
   end
